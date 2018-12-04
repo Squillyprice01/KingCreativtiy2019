@@ -2,11 +2,14 @@ import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 import numpy
 
+#parameters
 willsFilePath = "C:\\Users\\Will\\Documents\\GitHub\\KingCreativtiy2019\\output.csv"
 elyssasFilePath = ""
+dataFile = "student-mat2.csv"
+
 
 #read in the csv file
-trainingData = pd.read_csv('student-mat2.csv')
+trainingData = pd.read_csv(dataFile)
 print(trainingData)
 
 #One hot encode that data
