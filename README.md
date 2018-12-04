@@ -1,7 +1,7 @@
 # KingCreativtiy2019
 Bias in machine learning project
 
-#requirements
+# Requirements
 Python3
 Pandas
 SciKit-Learn
