@@ -26,7 +26,7 @@ numeric_transformer = Pipeline(steps=[
     ('scaler', StandardScaler())])
 
 #This array could be replaced with the column names of categorical data for any data set
-categorical_features = ['school','sex','address','famsize',
+categorical_features = ['sex','address','famsize',
                         'Pstatus','Fedu','Mjob','Fjob',
                         'reason','guardian','traveltime',
                         'studytime','failures','schoolsup',
@@ -58,13 +58,13 @@ preprocessor= ColumnTransformer(
 pipeline = Pipeline(steps=[('preprocessor', preprocessor),
                       ('classifier', LogisticRegression(solver='lbfgs'))])
 
-#training data
+#training data. Note that this attribute cannot be one of the features in the preprocessor above.
 X = training_data.drop('school', axis=1)
-#training targets
+#training targets. Note that this attribute cannot be one of the features in the preprocessor above.
 y = training_data['school']
 
-#split data into training and testing portions
-X_train, X_test, y_train, y_test = train_test_split(training_data, y, test_size=0.2)
+#split data into training and testing portions for both data and targets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 #fit the data
 pipeline.fit(X_train, y_train)
