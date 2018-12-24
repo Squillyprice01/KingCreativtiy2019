@@ -3,6 +3,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split, GridSearchCV
 
 import numpy
 
@@ -11,13 +13,19 @@ willsFilePath = "C:\\Users\\Will\\Documents\\GitHub\\KingCreativtiy2019\\output.
 elyssasFilePath = ""
 data_file = "student-mat2.csv"
 
+#read in the csv file
+training_data = pd.read_csv(data_file)
+
 #create preprocessing pipelines for both numeric and categorical data
 #https://scikit-learn.org/stable/auto_examples/compose/plot_column_transformer_mixed_types.html
+
+#This array could be replaced with the column names of quantitative data for any data set
 numeric_features = ['absences']
 numeric_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='median')),
     ('scaler', StandardScaler())])
 
+#This array could be replaced with the column names of categorical data for any data set
 categorical_features = ['school','sex','address','famsize',
                         'Pstatus','Fedu','Mjob','Fjob',
                         'reason','guardian','traveltime',
@@ -38,10 +46,27 @@ preprocessor= ColumnTransformer(
         ('cat', categorical_transformer, categorical_features)])
                         
 
-#read in the csv file
-training_data = pd.read_csv(data_file)
+##################################  write the processed data to a CSV##################################
+#processed_data = preprocessor.fit_transform(training_data).toarray()[:training_data['school'].size]
+#data_frame = pd.DataFrame(processed_data)
+#data_frame.to_csv(willsFilePath)
+#######################################################################################################
 
-#write the processed data to a CSV 
-processed_data = preprocessor.fit_transform(training_data).toarray()[:395]
-data_frame = pd.DataFrame(processed_data)
-data_frame.to_csv(willsFilePath)
+################################## train the data set #################################################
+# Append classifier to preprocessing pipeline.
+# Now we have a full prediction pipeline.
+pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                      ('classifier', LogisticRegression(solver='lbfgs'))])
+
+#training data
+X = training_data.drop('school', axis=1)
+#training targets
+y = training_data['school']
+
+#split data into training and testing portions
+X_train, X_test, y_train, y_test = train_test_split(training_data, y, test_size=0.2)
+
+#fit the data
+pipeline.fit(X_train, y_train)
+print("model score: %.3f" % pipeline.score(X_test, y_test))
+#######################################################################################################
