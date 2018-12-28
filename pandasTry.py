@@ -4,7 +4,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression, SGDClassifier
+from sklearn import svm
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 import numpy
@@ -56,7 +57,14 @@ preprocessor= ColumnTransformer(
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
 pipeline = Pipeline(steps=[('preprocessor', preprocessor),
-                      ('classifier', LogisticRegression(solver='lbfgs'))])
+                      #Use a logisitic regression
+                      #('classifier', LogisticRegression(solver='lbfgs'))])
+                      #Use a support vector machine
+                      #https://scikit-learn.org/stable/modules/svm.html#classification
+                      #('classifier', svm.SVC(gamma='scale'))])
+                      #Use Stochastic Gradient Descent
+                      #https://scikit-learn.org/stable/modules/sgd.html#classification
+                       ('classifier', SGDClassifier(max_iter=1000000, tol= 0.000001))])
 
 #training data. Note that this attribute cannot be one of the features in the preprocessor above.
 X = training_data.drop('school', axis=1)
@@ -64,7 +72,7 @@ X = training_data.drop('school', axis=1)
 y = training_data['school']
 
 #split data into training and testing portions for both data and targets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
 
 #fit the data
 pipeline.fit(X_train, y_train)
