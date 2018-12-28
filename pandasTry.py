@@ -1,17 +1,17 @@
+import os
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 import numpy
 
 #parameters
-willsFilePath = "C:\\Users\\Will\\Documents\\GitHub\\KingCreativtiy2019\\output.csv"
-elyssasFilePath = ""
 data_file = "student-mat2.csv"
+file_path = os.path.dirname(os.path.realpath(__file__)) + "\\output.csv"
 
 #read in the csv file
 training_data = pd.read_csv(data_file)
@@ -49,7 +49,7 @@ preprocessor= ColumnTransformer(
 ##################################  write the processed data to a CSV##################################
 #processed_data = preprocessor.fit_transform(training_data).toarray()[:training_data['school'].size]
 #data_frame = pd.DataFrame(processed_data)
-#data_frame.to_csv(willsFilePath)
+#data_frame.to_csv(file_path)
 #######################################################################################################
 
 ################################## train the data set #################################################
