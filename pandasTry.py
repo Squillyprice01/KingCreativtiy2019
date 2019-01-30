@@ -29,14 +29,14 @@ numeric_transformer = Pipeline(steps=[
     ('scaler', StandardScaler())])
 
 #This array could be replaced with the column names of categorical data for any data set
-categorical_features = ['sex','address','famsize',
+categorical_features = ['health','address','famsize',
                         'Pstatus','Fedu','Mjob','Fjob',
                         'reason','guardian','traveltime',
                         'studytime','failures','schoolsup',
                         'famsup','paid','activities','nursery',
                         'higher','internet','romantic','famrel',
                         'freetime','goout','Dalc','Walc',
-                        'health','absences']
+                        'school','absences']
 categorical_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
     ('onehot', OneHotEncoder(handle_unknown='ignore'))])
@@ -69,9 +69,9 @@ pipeline = Pipeline(steps=[('preprocessor', preprocessor),
                        ('classifier', SGDClassifier(max_iter=1000000, tol= 0.000001))])
 
 #training data. Note that this attribute cannot be one of the features in the preprocessor above.
-X = training_data.drop('school', axis=1)
+X = training_data.drop('sex', axis=1)
 #training targets. Note that this attribute cannot be one of the features in the preprocessor above.
-y = training_data['school']
+y = training_data['sex']
 
 #split data into training and testing portions for both data and targets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
@@ -80,12 +80,14 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
 #fit the data
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.fit(X_train, y_train).predict(X_test)
+print(y_test)
+print(y_pred)
 
 print("model score: %.3f" % pipeline.score(X_test, y_test))
-
+# dimension of the confusion matrix is the number of unique classifiers in the training data
 # https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
 def plot_confusion_matrix(cm, classes,
-                          normalize=True,
+                          normalize=False,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
     """
@@ -119,7 +121,7 @@ def plot_confusion_matrix(cm, classes,
     plt.tight_layout()
 
 # Compute confusion matrix
-cnf_matrix = confusion_matrix(y_test, y_pred)
+cnf_matrix = confusion_matrix(y_test, y_pred, labels=["M", "F"])
 np.set_printoptions(precision=2)
 
 # Plot non-normalized confusion matrix
@@ -132,6 +134,9 @@ plt.figure()
 plot_confusion_matrix(cnf_matrix, classes='sex', normalize=True,
                       title='Normalized confusion matrix')
 
-
+print(cnf_matrix)
+#https://www.dataschool.io/simple-guide-to-confusion-matrix-terminology/
+#PrecisionFemale=
+#PrecisionMale=
 plt.show()
 #######################################################################################################
