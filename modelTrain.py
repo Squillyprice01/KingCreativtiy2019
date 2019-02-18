@@ -11,31 +11,66 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import itertools
 import numpy as np
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("data_file", help="The name of the file containing data")
+parser.add_argument("feature_to_predict", help="The feature of that data to train model to predict")
+parser.add_argument("classifier", help="LogReg, SVM, or SGD")
+parser.add_argument("categorical_header_file", help="CSV containing the categorical column names of the data")
+parser.add_argument("numeric_header_file", help="CSV containing the numeric column names of the data")
+parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+parser.add_argument("-d", "--debug", help="used for debugging", action="store_true")
+args = parser.parse_args()
 
 
-#Use a logisitic regression
-#('classifier', LogisticRegression(solver='lbfgs'))])
-#Use a support vector machine
-#https://scikit-learn.org/stable/modules/svm.html#classification
-#('classifier', svm.SVC(gamma='scale'))])
-#Use Stochastic Gradient Descent
-#https://scikit-learn.org/stable/modules/sgd.html#classification
-#('classifier', SGDClassifier(max_iter=1000000, tol= 0.000001))])
 
-filePath = os.path.dirname(os.path.realpath(__file__)) + "\\student-mat2.csv"
+classifier = None
+if args.classifier == "LogReg":
+    if args.verbose:
+        print("Using Logisitic Regression")
+    classifier = LogisticRegression(solver='lbfgs')
+elif args.classifier == "SVM":
+    if args.verbose:
+        print("Using Support Vector Machine")
+    classifier = svm.SVC(gamma='scale')
+elif args.classifier == "SGD":
+    if args.verbose:
+        print("Using Gradient Decesnt")
+    classifier = SGDClassifier(max_iter=1000000, tol= 0.000001)
+else:
+    print("ERROR: incorrect arguement for classifier")
+
+
+filePath = os.path.dirname(os.path.realpath(__file__)) + "\\" + args.data_file
+categoricalFeaturePath = os.path.dirname(os.path.realpath(__file__)) + "\\" + args.categorical_header_file
+numericFeaturePath = os.path.dirname(os.path.realpath(__file__)) + "\\" + args.numeric_header_file
+
 trainingData = pd.read_csv(filePath)
+categoricalFeaturesFrame = pd.read_csv(categoricalFeaturePath)
+numericFeaturesFrame = pd.read_csv(numericFeaturePath)
 
-#REMOVED INTERNET, TODO: automatically remove this one
-categoricalFeatures = ['health','address','famsize',
-                        'Pstatus','Fedu','Mjob','Fjob',
-                        'reason','guardian','traveltime',
-                        'studytime','failures','schoolsup',
-                        'famsup','paid','activities','nursery',
-                        'higher','romantic','famrel',
-                        'freetime','goout','Dalc','Walc',
-                        'school']
+categoricalFeatures = list(categoricalFeaturesFrame.columns.values)
+numericFeatures = list(numericFeaturesFrame.columns.values)
 
-numericFeatures = ['absences']
+#Try and remove feature_to_predict from either numericFeatures or categoricalFeatures
+featureInCategorical = False
+featureInNumeric = False
+try:
+    categoricalFeatures.remove(args.feature_to_predict)
+    featureInCategorical = True
+except:
+    pass
+
+try:
+    numericFeatures.remove(args.feature_to_predict)
+    featureInNumeric = True
+except:
+    pass
+if featureInCategorical == False and featureInNumeric == False:
+    raise ValueError("feature_to_predict not a feature of the given dataset")
+            
+    
 
 def createPipeline(numericFeatures, categoricalFetures, classifier):
     #create preprocessing pipelines for both numeric and categorical data
@@ -77,7 +112,7 @@ def modelTrain(pipeline, featureToPredict, trainingData):
 
     return y_test, y_pred
 
-pipeline = createPipeline(numericFeatures, categoricalFeatures, LogisticRegression(solver='lbfgs'))
-y_test, y_pred = modelTrain(pipeline, 'internet', trainingData)
+pipeline = createPipeline(numericFeatures, categoricalFeatures, classifier)
+y_test, y_pred = modelTrain(pipeline, args.feature_to_predict, trainingData)
 
 print(y_test)
