@@ -16,6 +16,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("data_file", help="The name of the file containing data")
 parser.add_argument("feature_to_predict", help="The feature of that data to train model to predict")
+parser.add_argument("bias_feature", help="The feature to whose categories will be used to split the data")
 parser.add_argument("classifier", help="LogReg, SVM, or SGD")
 parser.add_argument("categorical_header_file", help="CSV containing the categorical column names of the data")
 parser.add_argument("numeric_header_file", help="CSV containing the numeric column names of the data")
@@ -100,11 +101,11 @@ def createPipeline(numericFeatures, categoricalFetures, classifier):
 
 pipeline = createPipeline(numericFeatures, categoricalFeatures, classifier)
 
-def model(pipeline, trainingData, featureToMeasureBias, featureToPredict):
+def model(pipeline, trainingData):
 
-    X = trainingData.drop(featureToPredict, axis=1)
-    featureToPredictList = trainingData[featureToPredict]
-    featureToMeasureBiasList = trainingData[featureToMeasureBias]
+    X = trainingData.drop(args.feature_to_predict, axis=1)
+    featureToPredictList = trainingData[args.feature_to_predict]
+    featureToMeasureBiasList = trainingData[args.bias_feature]
 
     X_train, X_test, y_train, y_test = train_test_split(X, featureToPredictList, test_size=0.25)
 
@@ -113,7 +114,7 @@ def model(pipeline, trainingData, featureToMeasureBias, featureToPredict):
     for i in range(len(predictorClasses)):
         PredictorX_tests.append([])
     for i in range(len(predictorClasses)):
-        PredictorX_tests[i] = X_test[X_test[featureToMeasureBias] == predictorClasses[i]]
+        PredictorX_tests[i] = X_test[X_test[args.bias_feature] == predictorClasses[i]]
 
     #fit the data
     pipeline.fit(X_train, y_train)
@@ -141,7 +142,7 @@ def model(pipeline, trainingData, featureToMeasureBias, featureToPredict):
 
     return PredictorX_tests, classPredicitons
 
-PredictorX_tests, classPredicitons = model(pipeline, trainingData, 'sex', 'health')
+PredictorX_tests, classPredicitons = model(pipeline, trainingData)
 
 
 
