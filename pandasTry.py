@@ -81,15 +81,33 @@ print('X_test',X_test)
 MaleX_test = X_test[X_test['sex']== 'M']
 FemaleX_test = X_test[X_test['sex']== 'F']
 print('YTEST')
-print(y_test)
+print(type(y_test))
+indeces = y_test.index
+print('INDECES',indeces)
+y_testList = list(y_test)
+print(y_testList[4])
+print(y_testList)
+malePred = []
+femalePred = []
 
+for i in y_test:
+    indeces = y_test.index
+    #myseries[myseries == 7].index[0]
+    print(X_test[X_test ==indeces[i]])
+
+    #if X_test[X_test == indeces[i]]['sex']=='M']]:
+        #malePred.append(y_test[i])
+    #if X_test[indeces[i]['sex']=='M']]:
+        #malePred.append(y_test[i])
 #MaleY_test = y_test[y_test['sex']== 'M']
 #FemaleY_test = y_test[y_test['sex']== 'F']
 
 # MFTest= X_test.loc[:,'sex']
-print('MALE DATA')
-print(MaleX_test)
-
+#print('MALE DATA')
+#print(MaleX_test)
+#print(y_test[0])
+#make a loop to split males and females of health
+#for i in y_test:
 
 #fit the data
 pipeline.fit(X_train, y_train)
