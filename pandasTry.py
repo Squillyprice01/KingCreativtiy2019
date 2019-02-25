@@ -11,111 +11,141 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import itertools
 import numpy as np
+import argparse
 
-#parameters
-data_file = "student-mat2.csv"
-file_path = os.path.dirname(os.path.realpath(__file__)) + "\\output.csv"
+parser = argparse.ArgumentParser()
+parser.add_argument("data_file", help="The name of the file containing data")
+parser.add_argument("feature_to_predict", help="The feature of that data to train model to predict")
+parser.add_argument("classifier", help="LogReg, SVM, or SGD")
+parser.add_argument("categorical_header_file", help="CSV containing the categorical column names of the data")
+parser.add_argument("numeric_header_file", help="CSV containing the numeric column names of the data")
+parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+parser.add_argument("-d", "--debug", help="used for debugging", action="store_true")
+args = parser.parse_args()
 
-#read in the csv file
-training_data = pd.read_csv(data_file)
 
-#create preprocessing pipelines for both numeric and categorical data
-#https://scikit-learn.org/stable/auto_examples/compose/plot_column_transformer_mixed_types.html
 
-#This array could be replaced with the column names of quantitative data for any data set
-numeric_features = ['absences']
-numeric_transformer = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='median')),
-    ('scaler', StandardScaler())])
+classifier = None
+if args.classifier == "LogReg":
+    if args.verbose:
+        print("Using Logisitic Regression")
+    classifier = LogisticRegression(solver='lbfgs')
+elif args.classifier == "SVM":
+    if args.verbose:
+        print("Using Support Vector Machine")
+    classifier = svm.SVC(gamma='scale')
+elif args.classifier == "SGD":
+    if args.verbose:
+        print("Using Gradient Decesnt")
+    classifier = SGDClassifier(max_iter=1000000, tol= 0.000001)
+else:
+    print("ERROR: incorrect arguement for classifier")
 
-#This array could be replaced with the column names of categorical data for any data set
-categorical_features = ['sex','address','famsize',
-                        'Pstatus','Fedu','Mjob','Fjob',
-                        'reason','guardian','traveltime',
-                        'studytime','failures','schoolsup',
-                        'famsup','paid','activities','nursery',
-                        'higher','internet','romantic','famrel',
-                        'freetime','goout','Dalc','Walc',
-                        'school','absences']
-categorical_transformer = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-    ('onehot', OneHotEncoder(handle_unknown='ignore'))])
 
-#create a column transformer that can one hot encode categorical data and
-#median scale numerical data
-preprocessor= ColumnTransformer(
-    transformers=[
-        ('num', numeric_transformer, numeric_features),
-        ('cat', categorical_transformer, categorical_features)])
+filePath = os.path.dirname(os.path.realpath(__file__)) + "\\" + args.data_file
+categoricalFeaturePath = os.path.dirname(os.path.realpath(__file__)) + "\\" + args.categorical_header_file
+numericFeaturePath = os.path.dirname(os.path.realpath(__file__)) + "\\" + args.numeric_header_file
 
-#partition this data based on this column split on so that
-#male vs female two conf matrices
-##################################  write the processed data to a CSV##################################
-#processed_data = preprocessor.fit_transform(training_data).toarray()[:training_data['school'].size]
-#data_frame = pd.DataFrame(processed_data)
-#data_frame.to_csv(file_path)
-#######################################################################################################
+trainingData = pd.read_csv(filePath)
+categoricalFeaturesFrame = pd.read_csv(categoricalFeaturePath)
+numericFeaturesFrame = pd.read_csv(numericFeaturePath)
 
-################################## train the data set #################################################
-# Append classifier to preprocessing pipeline.
-# Now we have a full prediction pipeline.
-pipeline = Pipeline(steps=[('preprocessor', preprocessor),
-                      #Use a logisitic regression
-                      #('classifier', LogisticRegression(solver='lbfgs'))])
-                      #Use a support vector machine
-                      #https://scikit-learn.org/stable/modules/svm.html#classification
-                      #('classifier', svm.SVC(gamma='scale'))])
-                      #Use Stochastic Gradient Descent
-                      #https://scikit-learn.org/stable/modules/sgd.html#classification
-                       ('classifier', SGDClassifier(max_iter=1000000, tol= 0.000001))])
+categoricalFeatures = list(categoricalFeaturesFrame.columns.values)
+numericFeatures = list(numericFeaturesFrame.columns.values)
 
-#training data. Note that this attribute cannot be one of the features in the preprocessor above.
-X = training_data.drop('health', axis=1)
-#training targets. Note that this attribute cannot be one of the features in the preprocessor above.
-y = training_data['health']
+#Try and remove feature_to_predict from either numericFeatures or categoricalFeatures
+featureInCategorical = False
+featureInNumeric = False
+try:
+    categoricalFeatures.remove(args.feature_to_predict)
+    featureInCategorical = True
+except:
+    pass
 
-#X 75% and Y 25%
-#split data into training and testing portions for both data and targets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
-print('X_test',X_test)
-MaleX_test = X_test[X_test['sex']== 'M']
-FemaleX_test = X_test[X_test['sex']== 'F']
-print('YTEST')
-print(type(y_test))
-indeces = y_test.index
-print('INDECES',indeces)
-y_testList = list(y_test)
-print(y_testList[4])
-print(y_testList)
-malePred = []
-femalePred = []
+try:
+    numericFeatures.remove(args.feature_to_predict)
+    featureInNumeric = True
+except:
+    pass
+if featureInCategorical == False and featureInNumeric == False:
+    raise ValueError("feature_to_predict not a feature of the given dataset")
+            
+    
 
-for i in y_test:
-    indeces = y_test.index
-    #myseries[myseries == 7].index[0]
-    print(X_test[X_test ==indeces[i]])
+def createPipeline(numericFeatures, categoricalFetures, classifier):
+    #create preprocessing pipelines for both numeric and categorical data
+    #https://scikit-learn.org/stable/auto_examples/compose/plot_column_transformer_mixed_types.html
 
-    #if X_test[X_test == indeces[i]]['sex']=='M']]:
-        #malePred.append(y_test[i])
-    #if X_test[indeces[i]['sex']=='M']]:
-        #malePred.append(y_test[i])
-#MaleY_test = y_test[y_test['sex']== 'M']
-#FemaleY_test = y_test[y_test['sex']== 'F']
 
-# MFTest= X_test.loc[:,'sex']
-#print('MALE DATA')
-#print(MaleX_test)
-#print(y_test[0])
-#make a loop to split males and females of health
-#for i in y_test:
+    numeric_features = numericFeatures
+    numeric_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler())])
 
-#fit the data
-pipeline.fit(X_train, y_train)
-y_pred = pipeline.predict(MaleX_test)
-#print('test',y_test)
-#print('pred' ,y_pred)
+    categorical_features = categoricalFetures
+    categorical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+        ('onehot', OneHotEncoder(handle_unknown='ignore'))])
 
-print("model score: %.3f" % pipeline.score(MaleX_test, MaleY_test))
+
+    preprocessor= ColumnTransformer(
+        transformers=[
+            ('num', numeric_transformer, numeric_features),
+            ('cat', categorical_transformer, categorical_features)])
+
+    pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                               ('classifier', classifier)])
+
+    return pipeline
+
+pipeline = createPipeline(numericFeatures, categoricalFeatures, classifier)
+
+def model(pipeline, trainingData, featureToMeasureBias, featureToPredict):
+
+    X = trainingData.drop(featureToPredict, axis=1)
+    featureToPredictList = trainingData[featureToPredict]
+    featureToMeasureBiasList = trainingData[featureToMeasureBias]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, featureToPredictList, test_size=0.25)
+
+    predictorClasses = featureToMeasureBiasList.unique()
+    PredictorX_tests = []
+    for i in range(len(predictorClasses)):
+        PredictorX_tests.append([])
+    for i in range(len(predictorClasses)):
+        PredictorX_tests[i] = X_test[X_test[featureToMeasureBias] == predictorClasses[i]]
+
+    #fit the data
+    pipeline.fit(X_train, y_train)
+
+
+    predictor_prediction_pairs = []
+    for index in y_test.index:
+        predictor_prediction_pairs.append((featureToMeasureBiasList[index], featureToPredictList[index]))
+
+    #number of unique classes of the category whose bias we are examining  
+    classPredicitons = []
+
+    for i in range(len(predictorClasses)):
+        classPredicitons.append([])
+
+    #predictor is the category who may be biased. In our example, the sex of the person.
+    #prediction is what the model predicted for the given person. In our example, the health of the person.
+    for predictor, prediction in predictor_prediction_pairs:
+        for i in range(len(predictorClasses)):
+            if predictor == predictorClasses[i]:
+                classPredicitons[i].append(prediction)
+                
+    for i in range(len(predictorClasses)):
+        print(predictorClasses[i]," model score: %.3f" % pipeline.score(PredictorX_tests[i], classPredicitons[i]))
+
+    return PredictorX_tests, classPredicitons
+
+PredictorX_tests, classPredicitons = model(pipeline, trainingData, 'sex', 'health')
+
+
+
+
 # dimension of the confusion matrix is the number of unique classifiers in the training data
 # https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
 def confMat(testData, predData):
@@ -143,10 +173,10 @@ def confMat(testData, predData):
     shape = (numUnique,numUnique)
     #print("SHAPE",shape)
     matrix = np.reshape(data,shape)
-    print('ELYSSA MATRIX')
-    print(matrix)
+    #print('ELYSSA MATRIX')
+    #print(matrix)
 
-confMat(y_test,y_pred)
+#confMat(y_test,y_pred)
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -185,9 +215,9 @@ uniqueElems=set(y_test)
 unique=list(uniqueElems)
 #print(uniqueElems)
 # Compute confusion matrix
-print('SCIKIT MATRIX')
-cnf_matrix = confusion_matrix(y_test, y_pred, labels=unique)
-np.set_printoptions(precision=2)
+#print('SCIKIT MATRIX')
+#cnf_matrix = confusion_matrix(y_test, y_pred, labels=unique)
+#np.set_printoptions(precision=2)
 
 # Plot non-normalized confusion matrix
 #plt.figure()
@@ -199,7 +229,7 @@ np.set_printoptions(precision=2)
 #plot_confusion_matrix(cnf_matrix, classes=uniqueElems, normalize=True,
                       #title='Normalized confusion matrix')
 
-print(cnf_matrix)
+#print(cnf_matrix)
 #https://www.dataschool.io/simple-guide-to-confusion-matrix-terminology/
 #PrecisionFemale=
 #PrecisionMale=
