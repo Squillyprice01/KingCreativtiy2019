@@ -43,11 +43,12 @@ else:
     print("ERROR: incorrect arguement for classifier")
 
 
-filePath = os.path.dirname(os.path.realpath(__file__)) + "\\" + args.data_file
-categoricalFeaturePath = os.path.dirname(os.path.realpath(__file__)) + "\\" + args.categorical_header_file
-numericFeaturePath = os.path.dirname(os.path.realpath(__file__)) + "\\" + args.numeric_header_file
+filePath = os.path.dirname(os.path.realpath(__file__)) + "/" + args.data_file
+categoricalFeaturePath = os.path.dirname(os.path.realpath(__file__)) + "/" + args.categorical_header_file
+numericFeaturePath = os.path.dirname(os.path.realpath(__file__)) + "/" + args.numeric_header_file
 
 trainingData = pd.read_csv(filePath)
+
 categoricalFeaturesFrame = pd.read_csv(categoricalFeaturePath)
 numericFeaturesFrame = pd.read_csv(numericFeaturePath)
 
@@ -70,8 +71,8 @@ except:
     pass
 if featureInCategorical == False and featureInNumeric == False:
     raise ValueError("feature_to_predict not a feature of the given dataset")
-            
-    
+
+
 
 def createPipeline(numericFeatures, categoricalFetures, classifier):
     #create preprocessing pipelines for both numeric and categorical data
@@ -108,23 +109,64 @@ def model(pipeline, trainingData):
     featureToMeasureBiasList = trainingData[args.bias_feature]
 
     X_train, X_test, y_train, y_test = train_test_split(X, featureToPredictList, test_size=0.25)
+    #The entire data set is 395 rows by 33 columns (trainingData)
+    #X_train is 75% of the dataset minus the column we want to predict, size: 296 rows by 32 columns
+    #y_train is the column we are predicting, size: 296 rows by 1 column
+    #X_test is 25% of the dataset we are using to test the trained model, size: 99 rows by 32 columns
+    #y_test is column of true values, size: 99 rows by 1 column
+
 
     predictorClasses = featureToMeasureBiasList.unique()
-    PredictorX_tests = []
+    #predictorClasses is [M,F]
+
+    PredictorX_tests = [] # entire training set for males and females has two elements
     for i in range(len(predictorClasses)):
         PredictorX_tests.append([])
     for i in range(len(predictorClasses)):
         PredictorX_tests[i] = X_test[X_test[args.bias_feature] == predictorClasses[i]]
 
+    print('females')
+    print(PredictorX_tests[0][args.bias_feature])
+    print('number of females to test on: ',len(PredictorX_tests[0][args.bias_feature]))
+    print('males')
+    print(PredictorX_tests[1][args.bias_feature])
+    print('number of males to test on: ',len(PredictorX_tests[1][args.bias_feature]))
+
+
+    #print(args.bias_feature)
+    #print(X_test[args.bias_feature])
+    #print(X_test.index)
+    #for index in X_test.index:
+    #    if
+    #print('PredictorX_tests')
+    #print(PredictorX_tests)
+    #PredictorX_tests is X_test split into males and females, contains two tables
     #fit the data
+
+    #NEED TO KNOW THE PREDICTION FOR MALE VS FEMALE
+
     pipeline.fit(X_train, y_train)
+    #make prediction
+    y_pred = pipeline.predict(X_test)
+    #the length of y_pred is the same as that of y_test . . . YAY
+    print("Ypred IS")
+    print(y_pred)
+    print(y_test)
 
+    for index in PredictorX_tests[0][args.bias_feature].index:
+        predictedVal = y_pred[index]
+        print('index is ', index)
+        print('predictedVal is ', predictedVal)
 
+        #need to know the ideces of the predictions,
+        #it is currently just an array with the correct size,
+        #but we need the corresponding indeces
     predictor_prediction_pairs = []
     for index in y_test.index:
-        predictor_prediction_pairs.append((featureToMeasureBiasList[index], featureToPredictList[index]))
-
-    #number of unique classes of the category whose bias we are examining  
+        predictor_prediction_pairs.append((featureToMeasureBiasList[index], y_pred[index]))#could be y_test
+    #print(predictor_prediction_pairs)
+    #number of unique classes of the category whose bias we are examining
+    # tuple of a male and the predicted result for that male, number of tuples is 25% of the inital dataset
     classPredicitons = []
 
     for i in range(len(predictorClasses)):
@@ -136,7 +178,8 @@ def model(pipeline, trainingData):
         for i in range(len(predictorClasses)):
             if predictor == predictorClasses[i]:
                 classPredicitons[i].append(prediction)
-                
+    print('classPredicitons')
+
     for i in range(len(predictorClasses)):
         print(predictorClasses[i]," model score: %.3f" % pipeline.score(PredictorX_tests[i], classPredicitons[i]))
 
