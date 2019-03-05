@@ -99,17 +99,32 @@ def createPipeline(numericFeatures, categoricalFetures, classifier):
     pipeline = Pipeline(steps=[('preprocessor', preprocessor),
                                ('classifier', classifier)])
 
-    return pipeline
 
+    return pipeline
+def oneHot(trainingData):
+    ohe = OneHotEncoder(sparse=False)
+    transformed = ohe.fit_transform(trainingData)
+    return transformed
+
+oneHotEncodedData = oneHot(trainingData)
+print(oneHotEncodedData)
+print(len(oneHotEncodedData[0]))
 pipeline = createPipeline(numericFeatures, categoricalFeatures, classifier)
 
-
+#have  single layer that is 1.5 times the number of inputs
 def model(pipeline, trainingData):
 
     X = trainingData.drop(args.feature_to_predict, axis=1)
     featureToPredictList = trainingData[args.feature_to_predict]
     featureToMeasureBiasList = trainingData[args.bias_feature]
+    predictorListClasses = featureToPredictList.unique()
+
+    
     X_train, X_test, y_train, y_test = train_test_split(X, featureToPredictList, test_size=0.25)
+    feature_cols = tf.contrib.learn.infer_real_valued_columns_from_input(X_train)
+    dnn_clf = tf.contrib.learn.DNNClassifier(hidden_units=189*2,n_classes=len(predictorListClasses), feature_columns= feature_cols)
+    dnn_clf = tf.contrib.learn.SKCompat(dnn_clf)
+    dff_clf.fit(X_train,y_train,batch_size=20,steps=40000)
 
     return PredictorX_tests, classPredicitons
 
