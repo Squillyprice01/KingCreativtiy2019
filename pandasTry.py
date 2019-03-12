@@ -115,66 +115,25 @@ def model(pipeline, trainingData):
     #X_test is 25% of the dataset we are using to test the trained model, size: 99 rows by 32 columns
     #y_test is column of true values, size: 99 rows by 1 column
 
-
-    predictorClasses = featureToMeasureBiasList[args.bias_feature].unique()
-    #predictorClasses is [M,F]
-
-    PredictorX_tests = [] # entire training set for males and females has two elements
-    for i in range(len(predictorClasses)):
-        PredictorX_tests.append([])
-    for i in range(len(predictorClasses)):
-        PredictorX_tests[i] = X_test[X_test[args.bias_feature] == predictorClasses[i]]
-
     #NEED TO KNOW THE PREDICTION FOR MALE VS FEMALE
 
     #the length of y_pred is the same as that of y_test . . . YAY
     pipeline.fit(X_train, y_train)
     #make prediction
     y_pred = pipeline.predict(X_test)
-    print(y_pred)
-
-    #for index in PredictorX_tests[0][args.bias_feature].index:
-    #    predictedVal = y_pred[index]
-        #print('index is ', index)
-        #print('predictedVal is ', predictedVal)
-
-        #need to know the ideces of the predictions,
-        #it is currently just an array with the correct size,
-        #but we need the corresponding indeces
-    predictor_prediction_pairs = []
-    #for index in y_test.index:
-    #    predictor_prediction_pairs.append((featureToMeasureBiasList[index], y_pred[index]))#could be y_test
-    #print(predictor_prediction_pairs)
-    #number of unique classes of the category whose bias we are examining
-    # tuple of a male and the predicted result for that male, number of tuples is 25% of the inital dataset
-    classPredicitons = []
-
-    #for i in range(len(predictorClasses)):
-    #    classPredicitons.append([])
-
-    #predictor is the category who may be biased. In our example, the sex of the person.
-    #prediction is what the model predicted for the given person. In our example, the health of the person.
-    #for predictor, prediction in predictor_prediction_pairs:
-    #    for i in range(len(predictorClasses)):
-    #        if predictor == predictorClasses[i]:
-    #            classPredicitons[i].append(prediction)
     
     tupleList = []
     for i in range(len(y_test.index)):
-        print("")
-        print(y_test.values[i])
-        print(y_test.index[i])
-        print(y_pred[i])
-        #print(featureToMeasureBiasList[args.bias_features])
-        print("")
+        actualValue = y_test.values[i][0]
+        index = y_test.index[i]
+        predictedValue = y_pred[i]
+        bias_feature =featureToMeasureBiasList[args.bias_feature].values[y_test.index[i]]
+        tupleList.append((bias_feature, predictedValue, actualValue, index))
 
+    return tupleList
 
-    #for i in range(len(predictorClasses)):
-       # print(predictorClasses[i]," model score: %.3f" % pipeline.score(PredictorX_tests[i], classPredicitons[i]))
-
-    return PredictorX_tests, classPredicitons
-
-PredictorX_tests, classPredicitons = model(pipeline, trainingData)
+tupleList = model(pipeline, trainingData)
+print(tupleList)
 
 
 
