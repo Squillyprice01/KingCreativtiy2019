@@ -105,8 +105,9 @@ pipeline = createPipeline(numericFeatures, categoricalFeatures, classifier)
 def model(pipeline, trainingData):
 
     X = trainingData.drop(args.feature_to_predict, axis=1)
-    featureToPredictList = trainingData[args.feature_to_predict]
-    featureToMeasureBiasList = trainingData[args.bias_feature]
+    featureToPredictList = trainingData[[args.feature_to_predict]]
+    featureToMeasureBiasList = trainingData[[args.bias_feature]]
+
 
     X_train, X_test, y_train, y_test = train_test_split(X, featureToPredictList, test_size=0.25)
     #The entire data set is 395 rows by 33 columns (trainingData)
@@ -116,7 +117,10 @@ def model(pipeline, trainingData):
     #y_test is column of true values, size: 99 rows by 1 column
 
 
-    predictorClasses = featureToMeasureBiasList.unique()
+    predictorClasses = featureToMeasureBiasList[args.bias_feature].unique()
+    print('predictorClasses')
+    print(predictorClasses)
+
     #predictorClasses is [M,F]
 
     PredictorX_tests = [] # entire training set for males and females has two elements
@@ -125,157 +129,99 @@ def model(pipeline, trainingData):
     for i in range(len(predictorClasses)):
         PredictorX_tests[i] = X_test[X_test[args.bias_feature] == predictorClasses[i]]
 
-    print('females')
-    print(PredictorX_tests[0][args.bias_feature])
+    #print('females')
+    #print(PredictorX_tests[0][args.bias_feature])
     print('number of females to test on: ',len(PredictorX_tests[0][args.bias_feature]))
-    print('males')
-    print(PredictorX_tests[1][args.bias_feature])
+    #print('males')
+    #print(PredictorX_tests[1][args.bias_feature])
     print('number of males to test on: ',len(PredictorX_tests[1][args.bias_feature]))
-
-
-    #print(args.bias_feature)
-    #print(X_test[args.bias_feature])
-    #print(X_test.index)
-    #for index in X_test.index:
-    #    if
-    #print('PredictorX_tests')
-    #print(PredictorX_tests)
-    #PredictorX_tests is X_test split into males and females, contains two tables
-    #fit the data
-
-    #NEED TO KNOW THE PREDICTION FOR MALE VS FEMALE
 
     pipeline.fit(X_train, y_train)
     #make prediction
     y_pred = pipeline.predict(X_test)
     #the length of y_pred is the same as that of y_test . . . YAY
-    print("Ypred IS")
-    print(y_pred)
-    print(y_test)
 
-    for index in PredictorX_tests[0][args.bias_feature].index:
-        predictedVal = y_pred[index]
-        print('index is ', index)
-        print('predictedVal is ', predictedVal)
 
-        #need to know the ideces of the predictions,
-        #it is currently just an array with the correct size,
-        #but we need the corresponding indeces
-    predictor_prediction_pairs = []
-    for index in y_test.index:
-        predictor_prediction_pairs.append((featureToMeasureBiasList[index], y_pred[index]))#could be y_test
-    #print(predictor_prediction_pairs)
-    #number of unique classes of the category whose bias we are examining
-    # tuple of a male and the predicted result for that male, number of tuples is 25% of the inital dataset
-    classPredicitons = []
+
+
+    tupleList = []
+    for i in range(len(y_test.index)):
+        actualValue = y_test.values[i][0]
+        index = y_test.index[i]
+        predictedValue = y_pred[i]
+        bias_feature = featureToMeasureBiasList[args.bias_feature].values[y_test.index[i]]
+        tupleList.append((bias_feature,predictedValue, actualValue, index))
+
+
+    predictorTuples =[]
+    for i in range(len(predictorClasses)):
+        predictorTuples.append([])
 
     for i in range(len(predictorClasses)):
-        classPredicitons.append([])
-
-    #predictor is the category who may be biased. In our example, the sex of the person.
-    #prediction is what the model predicted for the given person. In our example, the health of the person.
-    for predictor, prediction in predictor_prediction_pairs:
-        for i in range(len(predictorClasses)):
-            if predictor == predictorClasses[i]:
-                classPredicitons[i].append(prediction)
-    print('classPredicitons')
-
-    for i in range(len(predictorClasses)):
-        print(predictorClasses[i]," model score: %.3f" % pipeline.score(PredictorX_tests[i], classPredicitons[i]))
-
-    return PredictorX_tests, classPredicitons
-
-PredictorX_tests, classPredicitons = model(pipeline, trainingData)
+        for feat in predictorClasses:
+            for tuple in tupleList:
+                if tuple[0] == feat:
+                    predictorTuples[i].append(tuple)
+    print(predictorTuples[0])
 
 
+
+    maleTuples = []
+    for tuple in tupleList:
+        if tuple[0]== 'M':
+            maleTuples.append(tuple)
+    #print('males')
+    #print(maleTuples)
+    return maleTuples
+
+maleTuples = model(pipeline, trainingData)
+#print(tupleList)
 
 
 # dimension of the confusion matrix is the number of unique classifiers in the training data
 # https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
-def confMat(testData, predData):
+def confMat(tuples):
     #print('test',testData)
     #print('predication data',predData)
-    uniqueElems = set(testData)
-    #print('uniqueElems',uniqueElems)
+    firstTup = tuples[0]
+    biasFeat = firstTup[0]
+
+
+    predictedValues =[]
+    actualValues = []
+    for tuple in tuples:
+        predictedValues.append(tuple[1])
+        actualValues.append(tuple[2])
+
+
+    uniqueElems = set(actualValues)
     numUnique = len(uniqueElems)
-    #print('uniqueElems', uniqueElems)
-    zipping = zip(y_test,y_pred)
+    zipping = zip(actualValues,predictedValues)
     pairs = list(zipping)
     counts = []
-    #print('TESTING',pairs)
     for i in uniqueElems:
         for j in uniqueElems:
             mapped = list(map(lambda x : x[0] == i and x[1] == j, pairs))
-            #print('MAPPED',mapped)
             count  = len(list(filter(lambda x: x, mapped)))
-            #print("i =",i,", j=",j,", count=",count)
             counts.append(count)
-            #print('COUNTS',counts)
 
     data = np.array(counts)
-    #print('DATA',data)
     shape = (numUnique,numUnique)
-    #print("SHAPE",shape)
     matrix = np.reshape(data,shape)
-    #print('ELYSSA MATRIX')
-    #print(matrix)
+    return matrix
 
-#confMat(y_test,y_pred)
 
-def plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
 
-    #This function prints and plots the confusion matrix.
-    #Normalization can be applied by setting `normalize=True`.
+ourMatrix = confMat(maleTuples)
+print('Our Matrix: ')
+print(ourMatrix)
 
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
-    else:
-        print('Confusion matrix, without normalization')
-
-    #print(cm)
-
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-
-    fmt = '.2f' if normalize else 'd'
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], fmt),
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.tight_layout()
-uniqueElems=set(y_test)
-unique=list(uniqueElems)
-#print(uniqueElems)
-# Compute confusion matrix
-#print('SCIKIT MATRIX')
-#cnf_matrix = confusion_matrix(y_test, y_pred, labels=unique)
-#np.set_printoptions(precision=2)
-
-# Plot non-normalized confusion matrix
-#plt.figure()
-#plot_confusion_matrix(cnf_matrix, classes=uniqueElems,
-                      #title='Confusion matrix, without normalization')
-
-# Plot normalized confusion matrix
-#plt.figure()
-#plot_confusion_matrix(cnf_matrix, classes=uniqueElems, normalize=True,
-                      #title='Normalized confusion matrix')
-
-#print(cnf_matrix)
-#https://www.dataschool.io/simple-guide-to-confusion-matrix-terminology/
-#PrecisionFemale=
-#PrecisionMale=
-#plt.show()
-#######################################################################################################
+#to check if scikit generates the same confusion matrix
+predictedVals =[]
+actualVals = []
+for tuple in maleTuples:
+    predictedVals.append(tuple[1])
+    actualVals.append(tuple[2])
+uniqueElems = set(actualVals)
+print('SCIKIT MATRIX')
+print(confusion_matrix(actualVals, predictedVals))
