@@ -143,7 +143,6 @@ def model(pipeline, trainingData):
 
 
 
-
     tupleList = []
     for i in range(len(y_test.index)):
         actualValue = y_test.values[i][0]
