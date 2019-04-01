@@ -107,7 +107,8 @@ def model(pipeline, trainingData):
     X = trainingData.drop(args.feature_to_predict, axis=1)
     featureToPredictList = trainingData[[args.feature_to_predict]]
     featureToMeasureBiasList = trainingData[[args.bias_feature]]
-
+    print('we are predicting: ')
+    print(featureToPredictList)
 
     X_train, X_test, y_train, y_test = train_test_split(X, featureToPredictList, test_size=0.25)
     #The entire data set is 395 rows by 33 columns (trainingData)
@@ -167,10 +168,10 @@ def model(pipeline, trainingData):
 
     maleTuples = []
     for tuple in tupleList:
-        if tuple[0]== 'M':
+        if tuple[0]== 'Caucasian':
             maleTuples.append(tuple)
-    #print('males')
-    #print(maleTuples)
+    print('male')
+    print(maleTuples)
     return maleTuples
 
 maleTuples = model(pipeline, trainingData)
