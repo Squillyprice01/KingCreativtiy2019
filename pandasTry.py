@@ -120,7 +120,7 @@ def model(pipeline, trainingData):
 
     predictorClasses = featureToMeasureBiasList[args.bias_feature].unique()
     print('predictorClasses')
-    print(predictorClasses)
+    #print(predictorClasses)
 
     #predictorClasses is [M,F]
 
@@ -132,10 +132,11 @@ def model(pipeline, trainingData):
 
     #print('females')
     #print(PredictorX_tests[0][args.bias_feature])
-    print('number of females to test on: ',len(PredictorX_tests[0][args.bias_feature]))
+    for i in range(len(predictorClasses)):
+        print('number of ', predictorClasses[i], ' to test on: ',len(PredictorX_tests[i][args.bias_feature]))
     #print('males')
     #print(PredictorX_tests[1][args.bias_feature])
-    print('number of males to test on: ',len(PredictorX_tests[1][args.bias_feature]))
+    #print('number of males to test on: ',len(PredictorX_tests[1][args.bias_feature]))
 
     pipeline.fit(X_train, y_train)
     #make prediction
@@ -162,19 +163,19 @@ def model(pipeline, trainingData):
             for tuple in tupleList:
                 if tuple[0] == feat:
                     predictorTuples[i].append(tuple)
-    print(predictorTuples[0])
+    #print(predictorTuples[0])
 
 
-
-    maleTuples = []
+    testingFor = 'African-American'
+    print(testingFor)
+    RaceTuples = []
     for tuple in tupleList:
-        if tuple[0]== 'Caucasian':
-            maleTuples.append(tuple)
-    print('male')
-    print(maleTuples)
-    return maleTuples
+        if tuple[0]== testingFor:
+            RaceTuples.append(tuple)
 
-maleTuples = model(pipeline, trainingData)
+    return RaceTuples
+
+RaceTuples = model(pipeline, trainingData)
 #print(tupleList)
 
 
@@ -212,14 +213,14 @@ def confMat(tuples):
 
 
 
-ourMatrix = confMat(maleTuples)
+ourMatrix = confMat(RaceTuples)
 print('Our Matrix: ')
 print(ourMatrix)
 
 #to check if scikit generates the same confusion matrix
 predictedVals =[]
 actualVals = []
-for tuple in maleTuples:
+for tuple in RaceTuples:
     predictedVals.append(tuple[1])
     actualVals.append(tuple[2])
 uniqueElems = set(actualVals)
