@@ -167,7 +167,7 @@ def model(pipeline, trainingData, racial_measure):
     #print(predictorTuples[0])
 
 
-    testingFor = racial_measure
+    testingFor = racial_measure8
     print(testingFor)
     RaceTuples = []
     for tuple in tupleList:
@@ -198,16 +198,25 @@ def confMat(tuples):
 
 
     uniqueElems = set(actualValues)
+    print(uniqueElems)
     numUnique = len(uniqueElems)
     zipping = zip(actualValues,predictedValues)
     pairs = list(zipping)
+    #print(pairs)
     counts = []
     for i in uniqueElems:
+        print(i)
         for j in uniqueElems:
+            print(j)
             mapped = list(map(lambda x : x[0] == i and x[1] == j, pairs))
+            #print(pairs)
             count  = len(list(filter(lambda x: x, mapped)))
+            print(count)
             counts.append(count)
+            print('finished inner loop')
 
+    #print(pairs)
+    print(counts)
     data = np.array(counts)
     shape = (numUnique,numUnique)
     matrix = np.reshape(data,shape)
@@ -240,3 +249,4 @@ for race in raceList:
 #uniqueElems = set(actualVals)
 #print('SCIKIT MATRIX')
 #print(confusion_matrix(actualVals, predictedVals))
+
