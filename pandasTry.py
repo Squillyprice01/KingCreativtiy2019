@@ -102,13 +102,14 @@ def createPipeline(numericFeatures, categoricalFetures, classifier):
 
 pipeline = createPipeline(numericFeatures, categoricalFeatures, classifier)
 
-def model(pipeline, trainingData):
+#hacky
+def model(pipeline, trainingData, racial_measure):
 
     X = trainingData.drop(args.feature_to_predict, axis=1)
     featureToPredictList = trainingData[[args.feature_to_predict]]
     featureToMeasureBiasList = trainingData[[args.bias_feature]]
-    print('we are predicting: ')
-    print(featureToPredictList)
+    #print('we are predicting: ')
+    #print(featureToPredictList)
 
     X_train, X_test, y_train, y_test = train_test_split(X, featureToPredictList, test_size=0.25)
     #The entire data set is 395 rows by 33 columns (trainingData)
@@ -119,7 +120,7 @@ def model(pipeline, trainingData):
 
 
     predictorClasses = featureToMeasureBiasList[args.bias_feature].unique()
-    print('predictorClasses')
+    #print('predictorClasses')
     #print(predictorClasses)
 
     #predictorClasses is [M,F]
@@ -132,8 +133,8 @@ def model(pipeline, trainingData):
 
     #print('females')
     #print(PredictorX_tests[0][args.bias_feature])
-    for i in range(len(predictorClasses)):
-        print('number of ', predictorClasses[i], ' to test on: ',len(PredictorX_tests[i][args.bias_feature]))
+    #for i in range(len(predictorClasses)):
+    #    print('number of ', predictorClasses[i], ' to test on: ',len(PredictorX_tests[i][args.bias_feature]))
     #print('males')
     #print(PredictorX_tests[1][args.bias_feature])
     #print('number of males to test on: ',len(PredictorX_tests[1][args.bias_feature]))
@@ -166,7 +167,7 @@ def model(pipeline, trainingData):
     #print(predictorTuples[0])
 
 
-    testingFor = 'African-American'
+    testingFor = racial_measure
     print(testingFor)
     RaceTuples = []
     for tuple in tupleList:
@@ -175,13 +176,14 @@ def model(pipeline, trainingData):
 
     return RaceTuples
 
-RaceTuples = model(pipeline, trainingData)
-#print(tupleList)
 
 
 # dimension of the confusion matrix is the number of unique classifiers in the training data
 # https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
 def confMat(tuples):
+    #True label is the vertical axis, predicted label is the horizontal axis. Top right is recid but not predicted,
+    #Bottom left is no recid but predicted
+    
     #print('test',testData)
     #print('predication data',predData)
     firstTup = tuples[0]
@@ -211,18 +213,30 @@ def confMat(tuples):
     matrix = np.reshape(data,shape)
     return matrix
 
+raceList = ["African-American", "Caucasian", "Other", "Hispanic", "Asian", "Native American"]
 
-
-ourMatrix = confMat(RaceTuples)
-print('Our Matrix: ')
-print(ourMatrix)
+for race in raceList:
+    RaceTuples = model(pipeline, trainingData, race)
+    ourMatrix = confMat(RaceTuples)
+    #print('Our Matrix: ')
+    print(ourMatrix)
+    totalNumberOfRace = ourMatrix[0][0] + ourMatrix[0][1] + ourMatrix[1][0] + ourMatrix[1][1]
+    topLeft = ourMatrix[0][0]/totalNumberOfRace
+    topRight = (ourMatrix[0][1])/totalNumberOfRace
+    bottomLeft = (ourMatrix[1][0])/totalNumberOfRace
+    bottomRight = (ourMatrix[1][1])/totalNumberOfRace
+    percentageMatrix = [[topLeft,topRight],[bottomLeft,bottomRight]]
+    print(percentageMatrix)
+#ourMatrix = confMat(RaceTuples)
+#print('Our Matrix: ')
+#print(ourMatrix)
 
 #to check if scikit generates the same confusion matrix
-predictedVals =[]
-actualVals = []
-for tuple in RaceTuples:
-    predictedVals.append(tuple[1])
-    actualVals.append(tuple[2])
-uniqueElems = set(actualVals)
-print('SCIKIT MATRIX')
-print(confusion_matrix(actualVals, predictedVals))
+#predictedVals =[]
+#actualVals = []
+#for tuple in RaceTuples:
+#    predictedVals.append(tuple[1])
+#    actualVals.append(tuple[2])
+#uniqueElems = set(actualVals)
+#print('SCIKIT MATRIX')
+#print(confusion_matrix(actualVals, predictedVals))
